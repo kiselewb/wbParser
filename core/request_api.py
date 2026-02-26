@@ -31,9 +31,10 @@ class RequestAPI:
         await self.session.close()
         logger.info("✅ HTTP Сессия Закрыта")
 
-    @staticmethod
-    async def make_request(session: ClientSession, url: str, params: dict | None = None) -> dict | None:
-        logger.debug(f"Используется сессия {session}")
-        response = await session.get(url=url, params=params)
+    async def make_request(
+        self, url: str, params: dict | None = None
+    ) -> dict | None:
+        logger.debug(f"Используется сессия {self.session}")
+        response = await self.session.get(url=url, params=params)
         response.raise_for_status()
         return json.loads(await response.text())
