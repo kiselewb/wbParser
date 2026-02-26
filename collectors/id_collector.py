@@ -9,7 +9,6 @@ from loguru import logger
 class IdProductCollector:
     def __init__(self, client: ClientAPI):
         self.client = client
-        self.products_ids_len = 0
         self._create_products_id_file()
 
     async def collect_ids(self):
@@ -18,6 +17,7 @@ class IdProductCollector:
     async def _get_ids(self) -> bool | None:
         logger.info("📊 Начало получения списка ID товаров")
 
+        products_ids_len = 0
         current_page = 1
 
         while True:
@@ -29,13 +29,13 @@ class IdProductCollector:
             temp_ids_list = [product.get("id", "x000x") for product in products_list]
 
             self._save_ids(temp_ids_list)
-            self.products_ids_len += len(temp_ids_list)
+            products_ids_len += len(temp_ids_list)
 
             current_page += 1
 
-        if self.products_ids_len:
+        if products_ids_len:
             logger.info(
-                f"✅ Список ID товаров успешно получен. Всего товаров: {self.products_ids_len}"
+                f"✅ Список ID товаров успешно получен. Всего товаров: {products_ids_len}"
             )
             return True
         else:
