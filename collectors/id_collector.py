@@ -7,8 +7,8 @@ from loguru import logger
 
 
 class IdProductCollector:
-    def __init__(self, session_client: ClientAPI):
-        self.client = session_client
+    def __init__(self, client: ClientAPI):
+        self.client = client
         self.products_ids_len = 0
         self._create_products_id_file()
 
@@ -23,15 +23,15 @@ class IdProductCollector:
         while True:
             products_list = await self.client.get_products_list(current_page)
 
-            if products_list:
-                temp_ids_list = [product.get("id", "x000x") for product in products_list]
-
-                self._save_ids(temp_ids_list)
-                self.products_ids_len += len(temp_ids_list)
-
-                current_page += 1
-            else:
+            if not products_list:
                 break
+
+            temp_ids_list = [product.get("id", "x000x") for product in products_list]
+
+            self._save_ids(temp_ids_list)
+            self.products_ids_len += len(temp_ids_list)
+
+            current_page += 1
 
         if self.products_ids_len:
             logger.info(
