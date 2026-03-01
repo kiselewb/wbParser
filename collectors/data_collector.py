@@ -1,6 +1,7 @@
 import json
+from typing import AsyncGenerator, Any
 
-from config.paths import PRODUCTS_FILE, DATA_DIR
+from config.paths import PRODUCTS_FILE, DATA_DIR, PRODUCTS_ID_FILE
 from config.settings import settings
 from core.client_api import ClientAPI
 from loguru import logger
@@ -11,11 +12,15 @@ class DataProductCollector:
         self.client = client
         self._create_products_data_file()
 
-    async def collect_data(self):
-        async for product in self.parse_products():
-            self._save_product(product)
+    async def collect_data(self, is_from_file: bool = False) -> None:
+        if is_from_file:
+            async for id in self._products_ids_generator():
+                await self.parse_product(id)
+        else:
+            async for product in self.parse_products():
+                self._save_product(product)
 
-    async def parse_products(self):
+    async def parse_products(self) -> AsyncGenerator[dict]:
         async for product, index in self._products_generator():
             logger.info(f"📍 {index}: парсинг {product.get('id')}")
 
@@ -26,6 +31,18 @@ class DataProductCollector:
             images = self._parse_images(card)
 
             yield details | info | images
+
+    async def parse_product(self, product_id: int) -> dict:
+        logger.info(f"📍 Единичный парсинг {product_id}")
+
+        product = await self.client.get_product(product_id)
+        card = await self.client.get_product_card(product_id)
+
+        details = self._parse_details(product)
+        info = self._get_info(card)
+        images = self._parse_images(card)
+
+        return details | info | images
 
     def _parse_details(self, data: dict) -> dict:
         return {
@@ -84,7 +101,7 @@ class DataProductCollector:
             return {"images": images}
         return {"images": []}
 
-    async def _products_generator(self):
+    async def _products_generator(self) -> AsyncGenerator[tuple[Any, int], Any]:
         logger.info("📊 Начало получения списка товаров")
 
         total = 0
@@ -105,12 +122,23 @@ class DataProductCollector:
         logger.info(f"✅ Товары успешно найдены и обработаны. Всего товаров: {total}")
 
     @staticmethod
+    async def _products_ids_generator() -> AsyncGenerator[int]:
+        with open(PRODUCTS_ID_FILE, "r", encoding="utf-8") as f:
+            ids = json.load(f)
+
+        logger.info(f"Из файла загружено {len(ids)} ID товаров")
+
+        for id in ids:
+            logger.debug(id)
+            yield id
+
+    @staticmethod
     def _save_product(data: dict) -> None:
         with open(PRODUCTS_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
     @staticmethod
-    def _create_products_data_file():
+    def _create_products_data_file() -> None:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with open(PRODUCTS_FILE, "w", encoding="utf-8"):
             pass

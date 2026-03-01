@@ -30,7 +30,7 @@ class BrowserAPI:
 
         return self.page
 
-    async def close_browser(self):
+    async def close_browser(self) -> None:
         await self.page.close()
         await self.context.close()
         await self.browser.close()

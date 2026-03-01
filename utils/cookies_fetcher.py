@@ -1,4 +1,3 @@
-import asyncio
 import json
 
 from loguru import logger
@@ -14,7 +13,7 @@ class CookiesManager:
         self._create_cookies_dir()
         setup_logger()
 
-    async def write_cookies(self):
+    async def write_cookies(self) -> None:
         cookies = await self._get_cookies()
         with open(COOKIES_FILE, "w", encoding="utf-8") as f:
             json.dump(cookies, f, indent=4, ensure_ascii=False)
@@ -48,9 +47,5 @@ class CookiesManager:
                 await browser.close()
 
     @staticmethod
-    def _create_cookies_dir():
+    def _create_cookies_dir() -> None:
         COOKIES_DIR.mkdir(parents=True, exist_ok=True)
-
-
-cookies_manager = CookiesManager()
-asyncio.run(cookies_manager.write_cookies())

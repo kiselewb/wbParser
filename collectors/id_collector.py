@@ -11,7 +11,7 @@ class IdProductCollector:
         self.client = client
         self._create_products_id_file()
 
-    async def collect_ids(self):
+    async def collect_ids(self) -> None:
         await self._get_ids()
 
     async def _get_ids(self) -> bool | None:
@@ -42,7 +42,7 @@ class IdProductCollector:
             raise ProductsIDsNotFoundError()
 
     @staticmethod
-    def _save_ids(new_data: list):
+    def _save_ids(new_data: list) -> None:
         with open(PRODUCTS_ID_FILE, "r+", encoding="utf-8") as f:
             try:
                 data = json.load(f)
@@ -56,7 +56,7 @@ class IdProductCollector:
             f.truncate()
 
     @staticmethod
-    def _create_products_id_file():
+    def _create_products_id_file() -> None:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with open(PRODUCTS_ID_FILE, "w", encoding="utf-8"):
             pass
