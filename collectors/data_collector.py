@@ -1,6 +1,8 @@
 import json
 from typing import AsyncGenerator, Any
 
+import aiofiles
+
 from config.paths import PRODUCTS_FILE, DATA_DIR, PRODUCTS_ID_FILE
 from config.settings import settings
 from core.client_api import ClientAPI
@@ -68,7 +70,7 @@ class DataProductCollector:
         for size in data.get("sizes", []):
             price = size.get("price", {})
             if "product" in price:
-                return price["product"]
+                return price["product"] / 100
         return "NO_DATA"
 
     @staticmethod
@@ -123,7 +125,7 @@ class DataProductCollector:
 
     @staticmethod
     async def _products_ids_generator() -> AsyncGenerator[int]:
-        with open(PRODUCTS_ID_FILE, "r", encoding="utf-8") as f:
+        async with aiofiles.open(PRODUCTS_ID_FILE, "r", encoding="utf-8") as f:
             ids = json.load(f)
 
         logger.info(f"Из файла загружено {len(ids)} ID товаров")

@@ -72,5 +72,24 @@ class LogsSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
+class ReportSettings(BaseSettings):
+    HEADERS: list[str] = [
+        "Ссылка на товар",
+        "Артикул",
+        "Название",
+        "Цена",
+        "Описание",
+        "Изображения",
+        "Характеристики",
+        "Продавец",
+        "Ссылка на продавца",
+        "Размеры",
+        "Остаток товара",
+        "Рейтинг",
+        "Количество отзывов",
+    ]
+
+
 settings = Settings()
 logs_settings = LogsSettings()
+report_settings = ReportSettings()

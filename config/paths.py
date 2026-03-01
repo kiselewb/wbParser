@@ -9,6 +9,7 @@ COOKIES_FILE = COOKIES_DIR / "cookies.json"
 DATA_DIR = BASE_DIR / "data"
 PRODUCTS_ID_FILE = DATA_DIR / "products_ids.json"
 PRODUCTS_FILE = DATA_DIR / "products.jsonl"
+REPORT_FILE = DATA_DIR
 
 LOGS_DIR = BASE_DIR / "logs"
 LOGS_FILE = LOGS_DIR / "logs.log"
