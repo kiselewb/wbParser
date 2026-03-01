@@ -1,8 +1,10 @@
 import asyncio
+
 from asyncio import CancelledError
 
 from loguru import logger
 
+from collectors.data_collector import DataProductCollector
 from core.client_api import ClientAPI
 from collectors.id_collector import IdProductCollector
 from utils.exceptions import ParserException
@@ -13,9 +15,12 @@ async def main():
     setup_logger()
 
     try:
-        async with ClientAPI(True) as client:
-            id_collector = IdProductCollector(client)
-            await id_collector.collect_ids()
+        async with ClientAPI(True, True) as client:
+            # id_collector = IdProductCollector(client)
+            # await id_collector.collect_ids()
+
+            data_collector = DataProductCollector(client)
+            await data_collector.collect_data()
 
     except ParserException as e:
         logger.error(e)

@@ -5,6 +5,7 @@ import json
 from loguru import logger
 from config.paths import COOKIES_FILE
 from config.settings import settings
+from core.browser_api import BrowserAPI
 from core.request_api import RequestAPI
 from utils.exceptions import CookiesFileNotFoundError
 
@@ -28,7 +29,8 @@ class ClientAPI:
 
         if self.use_browser:
             pass
-            # await self._init_browser()
+            self.browser_api = BrowserAPI(self.headers, self.cookies)
+            self.page = await self.browser_api.open_browser()
 
         logger.info("✅ WB Client Инициализирован")
         logger.debug(self)
@@ -39,10 +41,9 @@ class ClientAPI:
             await self.request_api.close_session()
 
         if self.use_browser:
-            pass
-            # await self._close_browser()
+            await self.browser_api.close_browser()
 
-        logger.info("✅ WB Client закрыт")
+        logger.info("✅ WB Client Закрыт")
         return False
 
     async def get_products_list(self, page_number: int) -> list:
@@ -50,24 +51,20 @@ class ClientAPI:
         params = settings.SEARCH_PARAMS.copy()
         params["page"] = page_number
 
-        data = await self.request_api.make_request(self.session, url, params)
+        data = await self.request_api.make_request(url, params)
 
         return data.get("products", [])
 
-    # async def _get_product_details(self, product_id: int) -> dict | None:
-    #     url = settings.DETAILS_API_URL
-    #     params = settings.DETAILS_PARAMS.copy()
-    #     params["nm"] = product_id
-    #
-    #     data = await self._make_request(url, params)
-    #
-    #     return data.get("products")[0]
+    async def get_product_card(self, product_id: int) -> dict:
+        data = await self.browser_api.get_product_card(product_id)
 
-    # async def get_product(self, product_id: int) -> tuple[dict, dict, str]:
-    #     details = await self._get_product_details(product_id)
-    #     card, images_path = await self._get_product_info(product_id)
-    #
-    #     return details, card, images_path
+        card_data = dict()
+        card_data["response_url"] = data.get("response_url", "")
+        card_data["media_count"] = data.get("media", {}).get("photo_count", "")
+        card_data["options"] = data.get("options", [])
+        card_data["description"] = data.get("description", "")
+
+        return card_data
 
     @staticmethod
     def _get_cookies() -> dict:
