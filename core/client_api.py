@@ -53,7 +53,7 @@ class ClientAPI:
 
         data = await self.request_api.make_request(url, params)
 
-        return data.get("products", [])
+        return (data or {}).get("products", [])
 
     async def get_product(self, product_id: int) -> dict:
         url = settings.DETAILS_API_URL
@@ -63,7 +63,8 @@ class ClientAPI:
 
         data = await self.request_api.make_request(url, params)
 
-        return data.get("products", [])[0] if data.get("products", []) else None
+        products = (data or {}).get("products", [])
+        return products[0] if products else None
 
     async def get_product_card(self, product_id: int) -> dict:
         data = await self.browser_api.get_product_card(product_id)

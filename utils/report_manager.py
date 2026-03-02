@@ -116,9 +116,4 @@ class ReportManager:
 
     @staticmethod
     def _check_exists_file_products() -> bool:
-        try:
-            with open(PRODUCTS_FILE, "r", encoding="utf-8"):
-                pass
-            return True
-        except FileNotFoundError:
-            return False
+        return PRODUCTS_FILE.exists() and PRODUCTS_FILE.stat().st_size > 0
