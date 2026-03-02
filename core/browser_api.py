@@ -31,13 +31,22 @@ class BrowserAPI:
         return self.page
 
     async def close_browser(self) -> None:
-        try:
-            await self.page.close()
-            await self.context.close()
-            await self.browser.close()
-            await self.playwright.stop()
-        except Error as e:
-            logger.error(f"Браузер внезапно завершил свою работу")
+        for obj, name in [
+            (self.page, "page"),
+            (self.context, "context"),
+            (self.browser, "browser"),
+        ]:
+            if obj:
+                try:
+                    await obj.close()
+                except Error as e:
+                    logger.warning(f"⚠️ Ошибка при закрытии {name}: {e.message}")
+
+        if self.playwright:
+            try:
+                await self.playwright.stop()
+            except Error as e:
+                logger.warning(f"⚠️ Ошибка при остановке playwright: {e.message}")
 
         logger.info("✅ Браузер закрыт")
 

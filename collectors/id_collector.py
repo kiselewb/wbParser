@@ -1,5 +1,6 @@
 import json
 
+from config.settings import settings
 from core.client_api import ClientAPI
 from config.paths import DATA_DIR, PRODUCTS_ID_FILE
 from utils.exceptions import ProductsIDsNotFoundError
@@ -18,7 +19,7 @@ class IdProductCollector:
         logger.info("📊 Начало получения списка ID товаров")
 
         products_ids_len = 0
-        current_page = 1
+        current_page = settings.START_PAGE
 
         while True:
             products_list = await self.client.get_products_list(current_page)

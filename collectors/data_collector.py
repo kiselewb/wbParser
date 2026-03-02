@@ -108,7 +108,7 @@ class DataProductCollector:
         logger.info("📊 Начало получения списка товаров")
 
         total = 0
-        page = 4
+        page = settings.START_PAGE
         while True:
             products_list = await self.client.get_products_list(page)
             if not products_list:

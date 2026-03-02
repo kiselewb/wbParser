@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SEARCH_QUERY: str
     DEST: int
     LIMIT: int
+    START_PAGE: int
 
     @property
     def SEARCH_PARAMS(self) -> dict:
