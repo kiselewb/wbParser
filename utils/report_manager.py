@@ -16,8 +16,11 @@ class ReportManager:
         self.report_name = report_name
 
     async def create_report(self):
-        await self._create_main_report()
-        await self._create_part_report()
+        if self._check_exists_file_products():
+            await self._create_main_report()
+            await self._create_part_report()
+        else:
+            logger.error("❌ Файл с товарами не найден")
 
     async def _create_main_report(self):
         wb = Workbook()
@@ -101,12 +104,21 @@ class ReportManager:
         ]
 
     @staticmethod
-    def _set_column_format(ws: Worksheet):
+    def _set_column_format(ws: Worksheet) -> None:
         for cell in ws["D"][1:]:
             cell.number_format = "#,##0.00"
 
     @staticmethod
     async def _data_generator() -> AsyncGenerator[dict]:
-        async with aiofiles.open(PRODUCTS_FILE, encoding="utf-8") as f:
+        async with aiofiles.open(PRODUCTS_FILE, "r",encoding="utf-8") as f:
             async for line in f:
                 yield json.loads(line)
+
+    @staticmethod
+    def _check_exists_file_products() -> bool:
+        try:
+            with open(PRODUCTS_FILE, "r", encoding="utf-8"):
+                pass
+            return True
+        except FileNotFoundError:
+            return False

@@ -22,16 +22,19 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
     Полный цикл (Сбор ID + парсинг данных по ID из файла):
-    python -m main --mode full
+    uv run python -m main --mode full
     
     Получение ID товаров:
-    python -m main --mode ids
+    uv run python -m main --mode ids
     
     Парсинг товаров (не из файла):
-    python -m main --mode data
+    uv run python -m main --mode data
+    
+    Сформировать XLSX-файл из данных парсера:
+    uv run python -m main --mode report
     
     Получение Cookies:
-    python -m main --mode cookies
+    uv run python -m main --mode cookies
         """,
     )
 
@@ -42,7 +45,15 @@ async def main():
         help="Режим работы парсера",
     )
 
+    parser.add_argument(
+        "--report-name",
+        help="Название файла отчета (только для --mode report)"
+    )
+
     args = parser.parse_args()
+
+    if args.mode == "report" and not args.report_name:
+        parser.error("--report-name обязателен для --mode report")
 
     try:
         if args.mode == "ids":
@@ -60,7 +71,7 @@ async def main():
                     data_collector = DataProductCollector(client)
                     await data_collector.collect_data(is_from_file=True)
         elif args.mode == "report":
-            report_manager = ReportManager("test_report")
+            report_manager = ReportManager(args.report_name)
             await report_manager.create_report()
         else:
             cookies_manager = CookiesManager()
