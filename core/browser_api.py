@@ -1,5 +1,5 @@
 from loguru import logger
-from playwright.async_api import async_playwright, Page, Response
+from playwright.async_api import async_playwright, Page, Response, Error
 
 from config.settings import settings
 
@@ -31,10 +31,13 @@ class BrowserAPI:
         return self.page
 
     async def close_browser(self) -> None:
-        await self.page.close()
-        await self.context.close()
-        await self.browser.close()
-        await self.playwright.stop()
+        try:
+            await self.page.close()
+            await self.context.close()
+            await self.browser.close()
+            await self.playwright.stop()
+        except Error as e:
+            logger.error(f"Браузер внезапно завершил свою работу")
 
         logger.info("✅ Браузер закрыт")
 

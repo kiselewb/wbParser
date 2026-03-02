@@ -17,7 +17,8 @@ class DataProductCollector:
     async def collect_data(self, is_from_file: bool = False) -> None:
         if is_from_file:
             async for id in self._products_ids_generator():
-                await self.parse_product(id)
+                product = await self.parse_product(id)
+                await self._save_product(product)
         else:
             async for product in self.parse_products():
                 await self._save_product(product)
