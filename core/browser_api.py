@@ -53,7 +53,7 @@ class BrowserAPI:
     async def get_product_card(self, product_id: int) -> dict | None:
         try:
             async with self.page.expect_response(
-                    lambda r: "card1.json" in r.url
+                    lambda r: "card.json" in r.url
             ) as response_data:
                 await self._open_product_page(product_id)
         except TimeoutError as e:
