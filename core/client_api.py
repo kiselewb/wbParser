@@ -66,8 +66,11 @@ class ClientAPI:
         products = (data or {}).get("products", [])
         return products[0] if products else None
 
-    async def get_product_card(self, product_id: int) -> dict:
+    async def get_product_card(self, product_id: int) -> dict | None:
         data = await self.browser_api.get_product_card(product_id)
+
+        if not data:
+            return None
 
         card_data = dict()
         card_data["response_url"] = data.get("response_url", "")

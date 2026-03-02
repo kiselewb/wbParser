@@ -18,6 +18,8 @@ class DataProductCollector:
         if is_from_file:
             async for id in self._products_ids_generator():
                 product = await self.parse_product(id)
+                if not product:
+                    continue
                 await self._save_product(product)
         else:
             async for product in self.parse_products():
@@ -29,17 +31,24 @@ class DataProductCollector:
 
             card = await self.client.get_product_card(product.get("id"))
 
+            if not card:
+                continue
+
             details = self._parse_details(product)
             info = self._get_info(card)
             images = self._parse_images(card)
 
             yield details | info | images
 
-    async def parse_product(self, product_id: int) -> dict:
+    async def parse_product(self, product_id: int) -> dict | None:
         logger.info(f"📍 Единичный парсинг {product_id}")
 
         product = await self.client.get_product(product_id)
         card = await self.client.get_product_card(product_id)
+
+        if not card:
+            logger.warning(f"⚠️ Не удалось получить спарсить {product_id}")
+            return None
 
         details = self._parse_details(product)
         info = self._get_info(card)

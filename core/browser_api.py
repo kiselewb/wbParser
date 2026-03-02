@@ -1,5 +1,5 @@
 from loguru import logger
-from playwright.async_api import async_playwright, Page, Response, Error
+from playwright.async_api import async_playwright, Page, Response, Error, TimeoutError
 
 from config.settings import settings
 
@@ -30,7 +30,7 @@ class BrowserAPI:
 
         return self.page
 
-    async def close_browser(self) -> None:
+    async def close_browser(self):
         for obj, name in [
             (self.page, "page"),
             (self.context, "context"),
@@ -50,11 +50,15 @@ class BrowserAPI:
 
         logger.info("✅ Браузер закрыт")
 
-    async def get_product_card(self, product_id: int) -> dict:
-        async with self.page.expect_response(
-            lambda r: "card.json" in r.url
-        ) as response_data:
-            await self._open_product_page(product_id)
+    async def get_product_card(self, product_id: int) -> dict | None:
+        try:
+            async with self.page.expect_response(
+                    lambda r: "card1.json" in r.url
+            ) as response_data:
+                await self._open_product_page(product_id)
+        except TimeoutError as e:
+            logger.warning(f"⚠️ Ошибка при получении карточки товара {product_id}: {e.message}")
+            return None
 
         response = await response_data.value
         response_data = await response.json()
