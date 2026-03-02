@@ -68,17 +68,17 @@ class ReportManager:
     async def _write_filtered_data(self, ws: Worksheet):
         logger.info("Запись данных...")
         async for data in self._data_generator():
-            is_russian_manufactured = any(
-                option["name"] == "Страна производства"
-                and option.get("value") == "Россия"
-                for option in data["options"]
+            if not isinstance(data["options"], list):
+                continue
+            if data["rating"] == "NO_DATA" or data["price"] == "NO_DATA":
+                continue
+
+            is_russian = any(
+                opt["name"] == "Страна производства" and opt.get("value") == "Россия"
+                for opt in data["options"]
             )
 
-            if (
-                data["rating"] >= 4.5
-                and data["price"] <= 10000
-                and is_russian_manufactured
-            ):
+            if data["rating"] >= 4.5 and data["price"] <= 10000 and is_russian:
                 ws.append(self._row_from_data(data))
 
     @staticmethod

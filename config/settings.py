@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     DETAILS_API_URL: str
 
     SEARCH_QUERY: str
-    DEST: str
-    LIMIT: str
+    DEST: int
+    LIMIT: int
 
     @property
     def SEARCH_PARAMS(self) -> dict:

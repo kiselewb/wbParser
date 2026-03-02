@@ -20,7 +20,7 @@ class DataProductCollector:
                 await self.parse_product(id)
         else:
             async for product in self.parse_products():
-                self._save_product(product)
+                await self._save_product(product)
 
     async def parse_products(self) -> AsyncGenerator[dict]:
         async for product, index in self._products_generator():
@@ -125,8 +125,9 @@ class DataProductCollector:
 
     @staticmethod
     async def _products_ids_generator() -> AsyncGenerator[int]:
-        async with aiofiles.open(PRODUCTS_ID_FILE, "r", encoding="utf-8") as f:
-            ids = json.load(f)
+        async with aiofiles.open(PRODUCTS_ID_FILE, "r") as f:
+            content = await f.read()
+            ids = json.loads(content)
 
         logger.info(f"Из файла загружено {len(ids)} ID товаров")
 
@@ -135,9 +136,9 @@ class DataProductCollector:
             yield id
 
     @staticmethod
-    def _save_product(data: dict) -> None:
-        with open(PRODUCTS_FILE, "a", encoding="utf-8") as f:
-            f.write(json.dumps(data, ensure_ascii=False) + "\n")
+    async def _save_product(data: dict) -> None:
+        async with aiofiles.open(PRODUCTS_FILE, "a", encoding="utf-8") as f:
+            await f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
     @staticmethod
     def _create_products_data_file() -> None:
