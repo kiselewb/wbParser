@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from loguru import logger
 from playwright.async_api import async_playwright, Page, Response, Error, TimeoutError
@@ -14,6 +15,7 @@ class BrowserAPI:
         self.browser = None
         self.context = None
         self.page = None
+        self._page_lock = asyncio.Lock()
 
     async def open_browser(self) -> Page:
         self.playwright = await async_playwright().start()
@@ -53,32 +55,42 @@ class BrowserAPI:
         logger.info("✅ Браузер закрыт")
 
     async def get_product_card(self, product_id: int, retries: int = 3) -> dict | None:
-        for attempt in range(retries):
-            try:
-                async with self.page.expect_response(
-                        lambda r: "card.json" in r.url
-                ) as response_info:
-                    await self._open_product_page(product_id)
+        async with self._page_lock:
+            for attempt in range(retries):
+                try:
+                    async with self.page.expect_response(
+                            lambda r: "card.json" in r.url
+                    ) as response_info:
+                        await self._open_product_page(product_id)
 
-                response = await response_info.value
-                data = await response.json()
-                data["response_url"] = response.url
-                return data
+                    response = await response_info.value
+                    data = await response.json()
+                    data["response_url"] = response.url
+                    return data
 
-            except TimeoutError as e:
-                wait = 2 ** attempt
-                logger.warning(
-                    f"⚠️ Ошибка при получении карточки товара {product_id}: {e}. "
-                    f"Повтор через {wait}с (попытка {attempt + 1}/{retries})"
-                )
-                await asyncio.sleep(wait)
+                except TimeoutError as e:
+                    wait = random.uniform(3, 7) * (attempt + 1)
+                    logger.warning(f"⚠️ Повтор через {wait}с (попытка {attempt + 1}/{retries}): {e}")
+                    await asyncio.sleep(wait)
 
-            except Exception as e:
-                logger.error(f"❌ Ошибка при получении карточки товара {product_id}: {e}")
-                return None
+                except Exception as e:
+                    if any(err in str(e) for err in ["ERR_CONNECTION_RESET", "ERR_CONNECTION_REFUSED", "chrome-error://"]):
+                        wait = random.uniform(10, 20)
+                        logger.warning(f"⚠️ Похоже на блокировку, пауза {wait:.1f}с...")
+                        await asyncio.sleep(wait)
 
-        logger.error(f"❌ Все {retries} попытки исчерпаны: {product_id}")
-        return None
+                        try:
+                            await self.page.goto("about:blank", wait_until="domcontentloaded")
+                        except Exception:
+                            pass
+
+                        continue
+
+                    logger.error(f"❌ Ошибка при получении карточки товара {product_id}: {e}")
+                    return None
+
+            logger.error(f"❌ Все {retries} попытки исчерпаны: {product_id}")
+            return None
 
     async def _open_product_page(self, id: int) -> Response:
         url = settings.SITE_URL + "catalog/" + str(id) + "/detail.aspx"
