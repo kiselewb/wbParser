@@ -86,7 +86,23 @@ class ReportManager:
 
     @staticmethod
     def _row_from_data(data: dict) -> list:
-        options = [f"{option['name']}: {option['value']}" for option in data["options"]]
+        options_raw = data["options"]
+
+        if isinstance(options_raw, str):
+            try:
+                options_raw = json.loads(options_raw)
+            except (json.JSONDecodeError, TypeError):
+                options_raw = []
+
+        if not isinstance(options_raw, list):
+            options_raw = []
+
+        options = [
+            f"{option['name']}: {option['value']}"
+            for option in options_raw
+            if isinstance(option, dict)
+        ]
+
         return [
             data["link"],
             data["product_id"],
