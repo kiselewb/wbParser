@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 from playwright.async_api import async_playwright, Page, Response, Error, TimeoutError
 
@@ -50,21 +52,33 @@ class BrowserAPI:
 
         logger.info("✅ Браузер закрыт")
 
-    async def get_product_card(self, product_id: int) -> dict | None:
-        try:
-            async with self.page.expect_response(
-                    lambda r: "card.json" in r.url
-            ) as response_data:
-                await self._open_product_page(product_id)
-        except TimeoutError as e:
-            logger.warning(f"⚠️ Ошибка при получении карточки товара {product_id}: {e.message}")
-            return None
+    async def get_product_card(self, product_id: int, retries: int = 3) -> dict | None:
+        for attempt in range(retries):
+            try:
+                async with self.page.expect_response(
+                        lambda r: "card.json" in r.url
+                ) as response_info:
+                    await self._open_product_page(product_id)
 
-        response = await response_data.value
-        response_data = await response.json()
-        response_data["response_url"] = response.url
+                response = await response_info.value
+                data = await response.json()
+                data["response_url"] = response.url
+                return data
 
-        return response_data
+            except TimeoutError as e:
+                wait = 2 ** attempt
+                logger.warning(
+                    f"⚠️ Ошибка при получении карточки товара {product_id}: {e}. "
+                    f"Повтор через {wait}с (попытка {attempt + 1}/{retries})"
+                )
+                await asyncio.sleep(wait)
+
+            except Exception as e:
+                logger.error(f"❌ Ошибка при получении карточки товара {product_id}: {e}")
+                return None
+
+        logger.error(f"❌ Все {retries} попытки исчерпаны: {product_id}")
+        return None
 
     async def _open_product_page(self, id: int) -> Response:
         url = settings.SITE_URL + "catalog/" + str(id) + "/detail.aspx"
